@@ -289,23 +289,21 @@ function ChatApp() {
           role: m.role === "assistant" ? "model" : "user",
           parts: [{ text: m.content }]
         }));
-        // Support both AIza (old) and AQ. (new) format keys
-        const isNewFormat = GEMINI_API_KEY?.startsWith("AQ.");
-        const geminiUrl = isNewFormat
-          ? "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-          : `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
-        const geminiHeaders = isNewFormat
-          ? { "Content-Type": "application/json", "Authorization": `Bearer ${GEMINI_API_KEY}` }
-          : { "Content-Type": "application/json" };
-        const res = await fetch(geminiUrl, {
-          method: "POST",
-          headers: geminiHeaders,
-          body: JSON.stringify({
-            system_instruction: { parts: [{ text: systemPrompt }] },
-            contents: geminiMessages,
-            generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
-          })
-        });
+        const res = await fetch(
+         "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "x-goog-api-key": GEMINI_API_KEY
+            },
+            body: JSON.stringify({
+              system_instruction: { parts: [{ text: systemPrompt }] },
+              contents: geminiMessages,
+              generationConfig: { temperature: 0.7, maxOutputTokens: 4096 }
+            })
+          }
+        );
         const data = await res.json();
         reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || "Kuch galat ho gaya.";
       } else if (["gpt4o-mini", "deepseek", "mixtral", "gemma2", "llama31fast"].includes(selectedModel)) {

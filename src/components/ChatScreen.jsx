@@ -46,12 +46,9 @@ function ModelSelector({ selectedModel, onModelChange, borderColor, mutedText, i
   const [open, setOpen] = useState(false);
   const models = [
     { id: "groq", label: "Luma Pro", desc: "Fast & Powerful • Llama 3.3", color: "#a78bfa" },
-    { id: "gemini", label: "Luma", desc: "Smart • Gemini 1.5", color: "#60a5fa" },
-    { id: "gpt4o-mini", label: "GPT-4o Mini", desc: "OpenAI • via OpenRouter", color: "#22c55e" },
-    { id: "mixtral", label: "Mixtral 8x7B", desc: "Fast • via Groq", color: "#f59e0b" },
-    { id: "gemma2", label: "Gemma 2 9B", desc: "Google • via Groq", color: "#ec4899" },
-    { id: "deepseek", label: "DeepSeek", desc: "Reasoning • via OpenRouter", color: "#06b6d4" },
-    { id: "llama31fast", label: "Llama 3.1 8B", desc: "Fast • via Groq", color: "#84cc16" },
+    { id: "gemini", label: "Luma", desc: "Smart • ", color: "#60a5fa" },
+    { id: "gpt4o-mini", label: "GPT-4o Mini", desc: "Fast & Smart", color: "#22c55e" },
+   
   ];
   const current = models.find(m => m.id === selectedModel) || models[0];
 
