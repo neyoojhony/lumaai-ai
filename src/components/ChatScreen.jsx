@@ -143,7 +143,7 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
   };
 
   return (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, height: "100vh", background: bg }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, height: "100%", background: bg }}>
       {/* Topbar */}
       <div className="luma-search-pad" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: 12, paddingBottom: 12, borderBottom: `0.5px solid ${borderColor}` }}>
         <ModelSelector selectedModel={selectedModel} onModelChange={onModelChange} borderColor={borderColor} mutedText={mutedText} isDark={isDark} accentMain={accentMain} />
