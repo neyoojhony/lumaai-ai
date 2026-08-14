@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./components/AuthContext";
 import { db } from "./firebase";
@@ -54,6 +54,48 @@ function ChatApp() {
     if (activeChatId) localStorage.setItem("lastChatId", activeChatId);
     else localStorage.removeItem("lastChatId");
   }, [activeChatId]);
+
+  // ---- In-app back button handling (like Claude's app) ----
+  // Pehli baar mount hone par ek "home" state set karo, aur phone/browser
+  // ke back button ka listen karo taaki wo pehle app ke andar navigate kare,
+  // GitHub/purane page pe seedha na le jaye.
+  const isPoppingRef = useRef(false);
+
+  function pushView(view) {
+    if (isPoppingRef.current) return;
+    window.history.pushState(view, "");
+  }
+
+  useEffect(() => {
+    window.history.replaceState({ view: "home" }, "");
+
+    const onPopState = (e) => {
+      isPoppingRef.current = true;
+      const state = e.state || { view: "home" };
+
+      setShowCustomize(false);
+      if (isMobile) setSidebarOpen(false);
+
+      if (state.view === "chat") {
+        setCurrentPage("home");
+        setActiveChatId(state.id);
+      } else if (state.view === "chats" || state.view === "projects" || state.view === "artifacts") {
+        setCurrentPage(state.view);
+        setActiveChatId(null);
+      } else if (state.view === "customize") {
+        setShowCustomize(true);
+      } else {
+        // home
+        setCurrentPage("home");
+        setActiveChatId(null);
+      }
+
+      setTimeout(() => { isPoppingRef.current = false; }, 0);
+    };
+
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -415,6 +457,7 @@ function ChatApp() {
     setSuggestions([]);
     setCurrentPage("home");
     if (isMobile) setSidebarOpen(false);
+    pushView({ view: "chat", id: String(id) });
   }
 
   // projectId is passed when starting a new chat from within a project; null/undefined for a plain new chat
@@ -424,6 +467,7 @@ function ChatApp() {
     setSuggestions([]);
     setCurrentPage("home");
     if (isMobile) setSidebarOpen(false);
+    pushView({ view: "home" });
   }
 
   function renderMain() {
@@ -507,10 +551,10 @@ function ChatApp() {
           chats={visibleChats} activeChatId={activeChatId}
           onSelectChat={handleSelectChat}
           onNewChat={() => handleNewChat()}
-          onCustomize={() => { setShowCustomize(true); if (isMobile) setSidebarOpen(false); }}
-          onChatsPage={() => { setCurrentPage("chats"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); }}
-          onProjectsPage={() => { setCurrentPage("projects"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); }}
-          onArtifactsPage={() => { setCurrentPage("artifacts"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); }}
+          onCustomize={() => { setShowCustomize(true); if (isMobile) setSidebarOpen(false); pushView({ view: "customize" }); }}
+          onChatsPage={() => { setCurrentPage("chats"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); pushView({ view: "chats" }); }}
+          onProjectsPage={() => { setCurrentPage("projects"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); pushView({ view: "projects" }); }}
+          onArtifactsPage={() => { setCurrentPage("artifacts"); setActiveChatId(null); if (isMobile) setSidebarOpen(false); pushView({ view: "artifacts" }); }}
           onRenameChat={renameChat} onDeleteChat={deleteChat} onPinChat={pinChat} onExportChat={exportChat} onMoveChatToFolder={moveChatToFolder}
           projects={projects}
           sidebarBg={sidebarBg} textColor={textColor} accent={accent} theme={theme}
@@ -542,7 +586,7 @@ function ChatApp() {
       </main>
 
       {showCustomize && (
-        <CustomizePanel theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} accentColor={accentColor} setAccentColor={setAccentColor} bubbleStyle={bubbleStyle} setBubbleStyle={setBubbleStyle} onClose={() => setShowCustomize(false)} accent={accent} sidebarBg={sidebarBg} textColor={textColor} />
+        <CustomizePanel theme={theme} setTheme={setTheme} fontSize={fontSize} setFontSize={setFontSize} accentColor={accentColor} setAccentColor={setAccentColor} bubbleStyle={bubbleStyle} setBubbleStyle={setBubbleStyle} onClose={() => { if (window.history.state?.view === "customize") window.history.back(); else setShowCustomize(false); }} accent={accent} sidebarBg={sidebarBg} textColor={textColor} />
       )}
     </div>
   );
