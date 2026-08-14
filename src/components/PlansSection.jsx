@@ -21,12 +21,12 @@ const plans = [
 
 export default function PlansSection() {
   return (
-    <div style={{ padding: "80px 40px", maxWidth: 1100, margin: "0 auto" }}>
+    <div className="luma-plans-wrap" style={{ maxWidth: 1100, margin: "0 auto" }}>
       <div className="luma-badge">✦ Pricing</div>
       <h2 className="luma-section-title">Explore plans</h2>
       <p className="luma-section-sub">Choose the plan that fits your needs. Upgrade or downgrade anytime.</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 }}>
+      <div className="luma-plans-grid">
         {plans.map((p) => (
           <div key={p.name} className={`luma-plan-card ${p.popular ? "popular" : ""}`}>
             {p.popular && <div className="luma-popular-badge">Most popular</div>}

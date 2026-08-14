@@ -19,13 +19,14 @@ export default function LoginSection() {
   return (
     <div style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <AnimatedBackground />
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10, padding: "20px 28px" }}>
+      <div className="luma-login-wrap" style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10 }}>
         <Logo size={32} />
       </div>
       <div style={{
-        position: "relative", zIndex: 2, width: 380,
+        position: "relative", zIndex: 2, width: "min(380px, 92vw)",
         background: "rgba(10,10,12,0.78)", border: "0.5px solid rgba(255,255,255,0.1)",
-        borderRadius: 16, padding: 36, backdropFilter: "blur(20px)"
+        borderRadius: 16, padding: "clamp(22px, 6vw, 36px)", backdropFilter: "blur(20px)",
+        boxSizing: "border-box", margin: "0 12px"
       }}>
         <h1 style={{ fontSize: 22, fontWeight: 400, color: "#e8e4d9", marginBottom: 6, letterSpacing: "-0.02em", textAlign: "center" }}>
           Welcome back

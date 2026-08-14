@@ -13,7 +13,7 @@ const faqs = [
 export function FAQSection() {
   const [open, setOpen] = useState(null);
   return (
-    <div style={{ padding: "60px 40px 80px", maxWidth: 800, margin: "0 auto" }}>
+    <div className="luma-faq-wrap" style={{ maxWidth: 800, margin: "0 auto" }}>
       <div className="luma-badge">✦ FAQ</div>
       <h2 className="luma-section-title" style={{ marginBottom: 40 }}>Frequently asked questions</h2>
       {faqs.map((f, i) => (

@@ -305,6 +305,79 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
   }
 }
 
+/* Section title scales down on phones */
+@media (max-width: 480px) {
+  .luma-section-title {
+    font-size: 26px;
+  }
+}
+
+/* Login/landing card wrapper */
+.luma-login-wrap {
+  padding: 20px 28px;
+}
+@media (max-width: 480px) {
+  .luma-login-wrap {
+    padding: 16px 16px;
+  }
+}
+
+/* Pricing section wrapper */
+.luma-plans-wrap {
+  padding: 80px 40px;
+}
+@media (max-width: 768px) {
+  .luma-plans-wrap {
+    padding: 56px 24px;
+  }
+}
+@media (max-width: 480px) {
+  .luma-plans-wrap {
+    padding: 40px 16px;
+  }
+}
+
+/* Pricing cards grid - 3 cols desktop, 2 tablet, 1 phone */
+.luma-plans-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+@media (max-width: 860px) {
+  .luma-plans-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 560px) {
+  .luma-plans-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* FAQ section wrapper */
+.luma-faq-wrap {
+  padding: 60px 40px 80px;
+}
+@media (max-width: 768px) {
+  .luma-faq-wrap {
+    padding: 40px 24px 56px;
+  }
+}
+@media (max-width: 480px) {
+  .luma-faq-wrap {
+    padding: 32px 16px 40px;
+  }
+}
+
+/* Footer stacks on narrow screens */
+@media (max-width: 640px) {
+  .luma-footer {
+    padding: 24px 20px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 /* ===================== SYNTAX HIGHLIGHTING ===================== */
 .hljs { background: transparent !important; color: #abb2bf; }
 .hljs-keyword, .hljs-operator { color: #c678dd; }
