@@ -17,7 +17,7 @@ export default function LoginSection() {
   };
 
   return (
-    <div style={{ position: "relative", height: "100vh", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div className="luma-full-height" style={{ position: "relative", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <AnimatedBackground />
       <div className="luma-login-wrap" style={{ position: "absolute", top: 0, left: 0, right: 0, zIndex: 10 }}>
         <Logo size={32} />

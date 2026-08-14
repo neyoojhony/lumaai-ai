@@ -155,7 +155,8 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", gap: 18 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ width: "100%", maxWidth: 820, display: "flex", flexDirection: "column", gap: 18 }}>
         {chat.messages.map((msg, i) => (
           <div key={i}
             className={msg.role === "user" ? "luma-message-enter-right" : "luma-message-enter-left"}
@@ -277,10 +278,11 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
         )}
         <div ref={messagesEndRef} />
       </div>
+      </div>
 
       {/* Input */}
-      <div className="luma-chat-input-pad" style={{ borderTop: `0.5px solid ${borderColor}` }}>
-        <div className="luma-input-glow" style={{ background: inputBg, border: `0.5px solid ${borderColor}`, borderRadius: 14, padding: 16, "--luma-glow-color": accentBorderVar }}>
+      <div className="luma-chat-input-pad luma-safe-bottom" style={{ borderTop: `0.5px solid ${borderColor}` }}>
+        <div className="luma-input-glow" style={{ maxWidth: 820, margin: "0 auto", background: inputBg, border: `0.5px solid ${borderColor}`, borderRadius: 14, padding: 16, "--luma-glow-color": accentBorderVar }}>
           <textarea value={input}
             onChange={(e) => { setInput(e.target.value); autoResize(e); }}
             onKeyDown={handleKey}

@@ -156,7 +156,7 @@ export default function Sidebar({
       </div>
 
       {/* User */}
-      <div style={{ borderTop: `0.5px solid ${borderColor}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+      <div className="luma-safe-bottom" style={{ borderTop: `0.5px solid ${borderColor}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
         {user?.photoURL ? (
           <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
         ) : (

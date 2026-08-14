@@ -4,7 +4,38 @@
 @tailwind utilities;
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #080809; }
+html, body, #root { height: 100%; }
+html { overflow-x: hidden; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #080809;
+  overflow-x: hidden;
+  width: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Full-viewport height that works consistently across devtools, phones, tablets,
+   and desktops. 100vh is used as a fallback for older browsers; 100dvh (dynamic
+   viewport height) accounts for mobile browser toolbars that show/hide, which is
+   the #1 reason real phones render differently than DevTools' responsive mode. */
+.luma-full-height {
+  height: 100vh;
+  height: 100dvh;
+}
+.luma-full-min-height {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Keep bottom-fixed UI (chat input, sidebar footer) clear of the home-indicator /
+   gesture bar on notched phones (iPhone, modern Android). Safe no-op on devices
+   without a safe area. */
+.luma-safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.luma-safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 
 /* Scrollbar */
 .scrollbar-thin::-webkit-scrollbar { width: 4px; }

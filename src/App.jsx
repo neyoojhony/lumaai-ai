@@ -23,7 +23,7 @@ function LandingPage() {
   const { user } = useAuth();
   if (user) return <Navigate to="/chat" replace />;
   return (
-    <div style={{ background: "#080809", color: "#e8e4d9", minHeight: "100vh" }}>
+    <div className="luma-full-min-height" style={{ background: "#080809", color: "#e8e4d9" }}>
       <LoginSection />
       <PlansSection />
       <FAQSection />
@@ -533,7 +533,7 @@ function ChatApp() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", background: bgColor, color: textColor, overflow: "hidden", fontSize: fontSizeMap[fontSize], position: "relative" }}>
+    <div className="luma-full-height" style={{ display: "flex", background: bgColor, color: textColor, overflow: "hidden", fontSize: fontSizeMap[fontSize], position: "relative" }}>
 
       {/* Mobile backdrop */}
       {isMobile && sidebarOpen && (
@@ -543,12 +543,12 @@ function ChatApp() {
         />
       )}
 
-      <div style={{
+      <div className={isMobile ? "luma-full-height" : ""} style={{
         position: isMobile ? "fixed" : "relative",
         top: 0, left: 0, bottom: 0, zIndex: 50,
         transform: isMobile ? (sidebarOpen ? "translateX(0)" : "translateX(-100%)") : "none",
         transition: "transform 0.25s ease",
-        height: isMobile ? "100vh" : "100%",
+        height: isMobile ? undefined : "100%",
         display: "flex"
       }}>
         <Sidebar
@@ -568,7 +568,7 @@ function ChatApp() {
 
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, width: "100%" }}>
         {isMobile && (
-          <div style={{
+          <div className="luma-safe-top" style={{
             display: "flex", alignItems: "center", gap: 12, padding: "12px 16px",
             borderBottom: `0.5px solid ${theme === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"}`,
             flexShrink: 0

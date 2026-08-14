@@ -99,7 +99,7 @@ export default function HomeScreen({ onSend, accent, theme, textColor, prefill, 
   };
 
   return (
-    <div className="luma-page-enter luma-home-pad" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", background: bg, minHeight: 0, overflowY: "auto" }}
+    <div className="luma-page-enter luma-home-pad luma-safe-bottom" style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", position: "relative", background: bg, minHeight: 0, overflowY: "auto" }}
       onClick={() => { setShowPlus(false); setShowModels(false); }}>
 
       {/* Plan badge */}
