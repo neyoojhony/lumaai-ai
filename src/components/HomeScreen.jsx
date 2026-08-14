@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useBackClose } from "../useBackClose";
 
 const pills = [
   { label: "Code", icon: <CodeIcon /> },
@@ -31,6 +32,10 @@ export default function HomeScreen({ onSend, accent, theme, textColor, prefill, 
       if (onPrefillUsed) onPrefillUsed();
     }
   }, [prefill]);
+
+  // Plus menu aur model dropdown bhi back button se band ho jayenge
+  useBackClose(showPlus, () => setShowPlus(false));
+  useBackClose(showModels, () => setShowModels(false));
 
   const isDark = theme !== "light";
   const bg = isDark ? "#1a1915" : "#f5f5f0";

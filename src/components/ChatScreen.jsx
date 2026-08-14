@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import hljs from "highlight.js";
+import { useBackClose } from "../useBackClose";
 
 function CodeBlock({ children, className, isDark }) {
   const [copied, setCopied] = useState(false);
@@ -44,6 +45,7 @@ function CodeBlock({ children, className, isDark }) {
 
 function ModelSelector({ selectedModel, onModelChange, borderColor, mutedText, isDark, accentMain }) {
   const [open, setOpen] = useState(false);
+  useBackClose(open, () => setOpen(false));
   const models = [
     { id: "groq", label: "Luma Pro", desc: "Fast & Powerful • Llama 3.3", color: "#a78bfa" },
     { id: "gemini", label: "Luma", desc: "Smart • ", color: "#60a5fa" },

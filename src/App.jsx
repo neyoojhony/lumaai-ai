@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "./components/AuthContext";
 import { db } from "./firebase";
 import { collection, doc, setDoc, deleteDoc, onSnapshot, query, orderBy } from "firebase/firestore";
+import { useBackClose } from "./useBackClose";
 import Sidebar from "./components/Sidebar";
 import HomeScreen from "./components/HomeScreen";
 import ChatScreen from "./components/ChatScreen";
@@ -96,6 +97,9 @@ function ChatApp() {
     window.addEventListener("popstate", onPopState);
     return () => window.removeEventListener("popstate", onPopState);
   }, []);
+
+  // Mobile sidebar drawer also closes on back button
+  useBackClose(isMobile && sidebarOpen, () => setSidebarOpen(false));
 
   useEffect(() => {
     const handleResize = () => {
