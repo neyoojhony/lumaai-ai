@@ -26,7 +26,7 @@ function CodeBlock({ children, className, isDark }) {
   };
 
   return (
-    <div style={{ position: "relative", margin: "10px 0", borderRadius: 10, background: isDark ? "#0d0d0d" : "#1e1e1e", border: "0.5px solid rgba(255,255,255,0.08)" }}>
+    <div style={{ position: "relative", margin: "10px 0", borderRadius: 10, background: isDark ? "#0d0d0d" : "#1e1e1e", border: "0.5px solid rgba(255,255,255,0.08)", maxWidth: "100%", minWidth: 0, overflow: "hidden", boxSizing: "border-box" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "6px 14px", background: isDark ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)", borderBottom: "0.5px solid rgba(255,255,255,0.08)", borderRadius: "10px 10px 0 0", position: "sticky", top: 0, zIndex: 10 }}>
         <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)", textTransform: "lowercase" }}>{language || "code"}</span>
         <button onClick={handleCopy} style={{ background: "none", border: "none", cursor: "pointer", color: copied ? "#86efac" : "rgba(255,255,255,0.5)", fontSize: 12, display: "flex", alignItems: "center", gap: 5, padding: "2px 6px", borderRadius: 4 }}>
@@ -155,14 +155,14 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
       </div>
 
       {/* Messages */}
-      <div style={{ flex: 1, overflowY: "auto", padding: "20px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "20px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
       <div style={{ width: "100%", maxWidth: 820, display: "flex", flexDirection: "column", gap: 18 }}>
         {chat.messages.map((msg, i) => (
           <div key={i}
             className={msg.role === "user" ? "luma-message-enter-right" : "luma-message-enter-left"}
             onMouseEnter={() => setHoveredMsg(i)}
             onMouseLeave={() => setHoveredMsg(null)}
-            style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: msg.role === "user" ? "row-reverse" : "row" }}>
+            style={{ display: "flex", gap: 12, alignItems: "flex-start", flexDirection: msg.role === "user" ? "row-reverse" : "row", minWidth: 0, maxWidth: "100%" }}>
 
             {/* Avatar */}
             <div style={{
@@ -176,7 +176,7 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
             </div>
 
             {/* Content */}
-            <div style={{ maxWidth: "85%", display: "flex", flexDirection: "column", gap: 4, alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
+            <div style={{ maxWidth: "85%", minWidth: 0, flex: "1 1 auto", display: "flex", flexDirection: "column", gap: 4, alignItems: msg.role === "user" ? "flex-end" : "flex-start" }}>
               <p style={{ fontSize: 12, color: mutedText, textAlign: msg.role === "user" ? "right" : "left" }}>
                 {msg.role === "ai" ? "LumaAI" : "You"}
               </p>
@@ -198,6 +198,9 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
                   background: msg.role === "ai" ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)") : accentBg,
                   border: `0.5px solid ${msg.role === "ai" ? borderColor : accentBorder}`,
                   color: msg.role === "ai" ? textColor : accentLight,
+                  maxWidth: "100%", minWidth: 0, width: "100%",
+                  overflowWrap: "break-word", wordBreak: "break-word",
+                  boxSizing: "border-box",
                 }}>
                   {msg.role === "ai" ? (
                     msg.loading ? (
