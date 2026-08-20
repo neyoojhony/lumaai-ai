@@ -57,30 +57,38 @@ export default function AgentBuilder() {
   return (
     <div
       style={{
-        minHeight: "100vh",
+        height: "100dvh",
         background: "#0b0d10",
         color: "#e7e9ec",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        padding: 24,
         boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        overflow: "hidden",
       }}
     >
       <style>{`
-        .agent-wrap { max-width: 1100px; margin: 0 auto; }
+        html, body, #root { height: 100%; margin: 0; overflow: hidden; }
+        .agent-wrap { max-width: 1100px; width: 100%; margin: 0 auto; padding: 24px;
+          box-sizing: border-box; display: flex; flex-direction: column; height: 100%; min-height: 0; }
+        .agent-header { flex: 0 0 auto; }
         .agent-input-row { display: flex; gap: 10px; margin-bottom: 20px; background: #14181d;
-          border: 1px solid #22272e; border-radius: 10px; padding: 10px; }
+          border: 1px solid #22272e; border-radius: 10px; padding: 10px; flex: 0 0 auto; }
         .agent-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1px; background: #22272e;
-          border: 1px solid #22272e; border-radius: 12px; overflow: hidden; min-height: 480px; }
-        .agent-panel { background: #101317; padding: 18px; min-width: 0; }
+          border: 1px solid #22272e; border-radius: 12px; overflow: hidden; flex: 1 1 auto; min-height: 0; }
+        .agent-panel { background: #101317; padding: 18px; min-width: 0; min-height: 0;
+          display: flex; flex-direction: column; overflow: hidden; }
+        .agent-log-list { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+        .agent-preview-box { flex: 1 1 auto; min-height: 0; }
         @media (max-width: 760px) {
-          body, .agent-wrap { padding: 0; }
-          .agent-input-row { flex-direction: column; align-items: stretch; }
+          .agent-wrap { padding: 12px; }
+          .agent-input-row { flex-direction: column; align-items: stretch; margin-bottom: 12px; }
           .agent-input-row button { width: 100%; }
-          .agent-grid { grid-template-columns: 1fr; }
+          .agent-grid { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
         }
       `}</style>
       <div className="agent-wrap">
-        <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
+        <h1 className="agent-header" style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
           LumaAI Agent
         </h1>
 
@@ -131,19 +139,19 @@ export default function AgentBuilder() {
                 letterSpacing: "0.08em",
                 color: "#8b929c",
                 marginBottom: 14,
+                flex: "0 0 auto",
               }}
             >
               Build log
             </div>
             <div
+              className="agent-log-list"
               style={{
                 display: "flex",
                 flexDirection: "column",
                 gap: 4,
                 fontFamily: "monospace",
                 fontSize: 12.5,
-                maxHeight: 440,
-                overflowY: "auto",
               }}
             >
               {log.length === 0 && (
@@ -167,7 +175,7 @@ export default function AgentBuilder() {
                   }}
                 >
                   <span style={{ flex: "0 0 14px" }}>{icon(entry.kind)}</span>
-                  <span>{entry.text}</span>
+                  <span style={{ wordBreak: "break-word" }}>{entry.text}</span>
                 </div>
               ))}
               <div ref={logEndRef} />
@@ -183,16 +191,17 @@ export default function AgentBuilder() {
                 letterSpacing: "0.08em",
                 color: "#8b929c",
                 marginBottom: 14,
+                flex: "0 0 auto",
               }}
             >
               Live preview
             </div>
             <div
+              className="agent-preview-box"
               style={{
                 background: "#0d1013",
                 border: "1px solid #22272e",
                 borderRadius: 9,
-                height: 440,
                 width: "100%",
                 boxSizing: "border-box",
                 display: "flex",
