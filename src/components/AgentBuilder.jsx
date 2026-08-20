@@ -62,24 +62,29 @@ export default function AgentBuilder() {
         color: "#e7e9ec",
         fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
         padding: 24,
+        boxSizing: "border-box",
       }}
     >
-      <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+      <style>{`
+        .agent-wrap { max-width: 1100px; margin: 0 auto; }
+        .agent-input-row { display: flex; gap: 10px; margin-bottom: 20px; background: #14181d;
+          border: 1px solid #22272e; border-radius: 10px; padding: 10px; }
+        .agent-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1px; background: #22272e;
+          border: 1px solid #22272e; border-radius: 12px; overflow: hidden; min-height: 480px; }
+        .agent-panel { background: #101317; padding: 18px; min-width: 0; }
+        @media (max-width: 760px) {
+          body, .agent-wrap { padding: 0; }
+          .agent-input-row { flex-direction: column; align-items: stretch; }
+          .agent-input-row button { width: 100%; }
+          .agent-grid { grid-template-columns: 1fr; }
+        }
+      `}</style>
+      <div className="agent-wrap">
         <h1 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
           LumaAI Agent
         </h1>
 
-        <div
-          style={{
-            display: "flex",
-            gap: 10,
-            marginBottom: 20,
-            background: "#14181d",
-            border: "1px solid #22272e",
-            borderRadius: 10,
-            padding: 10,
-          }}
-        >
+        <div className="agent-input-row">
           <input
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -94,6 +99,7 @@ export default function AgentBuilder() {
               color: "#e7e9ec",
               fontSize: 14,
               padding: "6px 8px",
+              minWidth: 0,
             }}
           />
           <button
@@ -108,25 +114,15 @@ export default function AgentBuilder() {
               fontSize: 13,
               fontWeight: 600,
               cursor: running ? "default" : "pointer",
+              flexShrink: 0,
             }}
           >
             {running ? "Building..." : "Build"}
           </button>
         </div>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "340px 1fr",
-            gap: 1,
-            background: "#22272e",
-            border: "1px solid #22272e",
-            borderRadius: 12,
-            overflow: "hidden",
-            minHeight: 480,
-          }}
-        >
-          <div style={{ background: "#101317", padding: 18 }}>
+        <div className="agent-grid">
+          <div className="agent-panel">
             <div
               style={{
                 fontFamily: "monospace",
@@ -178,7 +174,7 @@ export default function AgentBuilder() {
             </div>
           </div>
 
-          <div style={{ background: "#101317", padding: 18 }}>
+          <div className="agent-panel">
             <div
               style={{
                 fontFamily: "monospace",
@@ -197,6 +193,8 @@ export default function AgentBuilder() {
                 border: "1px solid #22272e",
                 borderRadius: 9,
                 height: 440,
+                width: "100%",
+                boxSizing: "border-box",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
