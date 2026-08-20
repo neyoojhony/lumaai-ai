@@ -7,6 +7,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@webcontainer/api": "^1.3.0",
     "firebase": "^12.15.0",
     "highlight.js": "^11.11.1",
     "react": "^18.2.0",

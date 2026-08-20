@@ -107,6 +107,7 @@ export default function Sidebar({
           <SidebarItem icon={<ChatIcon />} label="Chats" onClick={onChatsPage} hoverBg={hoverBg} textColor={textColor} mutedText={mutedText} />
           <SidebarItem icon={<FolderIcon />} label="Projects" onClick={onProjectsPage} hoverBg={hoverBg} textColor={textColor} mutedText={mutedText} />
           <SidebarItem icon={<GridIcon />} label="Artifacts" onClick={onArtifactsPage} hoverBg={hoverBg} textColor={textColor} mutedText={mutedText} />
+          <SidebarItem icon={<span style={{ fontSize: 13 }}>⚡</span>} label="Agent" onClick={() => window.location.assign("/agent")} hoverBg={hoverBg} textColor={textColor} mutedText={mutedText} />
         </nav>
       )}
 

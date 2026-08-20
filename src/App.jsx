@@ -14,6 +14,7 @@ import LoginSection from "./components/LoginSection";
 import PlansSection from "./components/PlansSection";
 import { FAQSection, Footer } from "./components/FAQFooter";
 import CustomizePanel from "./components/CustomizePanel";
+import AgentBuilder from "./components/AgentBuilder";
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
@@ -602,6 +603,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/chat" element={<ChatApp />} />
+        <Route path="/agent" element={<AgentBuilder />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
