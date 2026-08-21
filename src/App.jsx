@@ -20,6 +20,46 @@ const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
+const GROQ_MAX_RETRIES = 5;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function parseRetryAfterSeconds(errorText) {
+  const match = errorText.match(/try again in ([\d.]+)s/i);
+  return match ? parseFloat(match[1]) : null;
+}
+
+// Shared helper for every direct Groq call — retries on 429 rate limits
+// and throws a real error instead of silently returning empty text.
+async function callGroq(payload) {
+  for (let attempt = 0; attempt <= GROQ_MAX_RETRIES; attempt++) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const content = data?.choices?.[0]?.message?.content;
+      if (!content) throw new Error("Groq returned an empty response");
+      return content;
+    }
+
+    const text = await res.text();
+
+    if (res.status === 429 && attempt < GROQ_MAX_RETRIES) {
+      const waitSeconds = parseRetryAfterSeconds(text) ?? 2 * (attempt + 1);
+      await sleep(Math.ceil(waitSeconds * 1000) + 300);
+      continue;
+    }
+
+    throw new Error(`Groq call failed: ${res.status} ${text}`);
+  }
+}
+
 function LandingPage() {
   const { user } = useAuth();
   if (user) return <Navigate to="/chat" replace />;
@@ -264,13 +304,10 @@ function ChatApp() {
 
   async function fetchSuggestions(userText, aiReply) {
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: `Based on this conversation:\nUser: "${userText}"\nAI: "${aiReply}"\n\nGenerate exactly 3 short follow-up questions the user might want to ask next.\nReturn ONLY a JSON array of 3 strings, nothing else.` }] })
+      const content = await callGroq({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: `Based on this conversation:\nUser: "${userText}"\nAI: "${aiReply}"\n\nGenerate exactly 3 short follow-up questions the user might want to ask next.\nReturn ONLY a JSON array of 3 strings, nothing else.` }]
       });
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content || "[]";
       const clean = content.replace(/```json|```/g, "").trim();
       setSuggestions(JSON.parse(clean));
     } catch { setSuggestions([]); }
@@ -278,16 +315,11 @@ function ChatApp() {
 
   async function generateChatTitle(chatId, userText, aiReply) {
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [{ role: "user", content: `Generate a very short title (3-6 words max) for this conversation:\nUser: "${userText}"\nAI: "${aiReply.slice(0, 200)}"\n\nReturn ONLY the title, nothing else. No quotes, no punctuation at end.` }]
-        })
+      const content = await callGroq({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: `Generate a very short title (3-6 words max) for this conversation:\nUser: "${userText}"\nAI: "${aiReply.slice(0, 200)}"\n\nReturn ONLY the title, nothing else. No quotes, no punctuation at end.` }]
       });
-      const data = await res.json();
-      const title = data?.choices?.[0]?.message?.content?.trim() || userText.slice(0, 40);
+      const title = content.trim() || userText.slice(0, 40);
       setChats(prev => {
         const updated = prev.map(c => c.id === chatId ? { ...c, title } : c);
         const chat = updated.find(c => c.id === chatId);
@@ -365,19 +397,12 @@ function ChatApp() {
         // Groq models
         if (["mixtral", "gemma2", "llama31fast"].includes(selectedModel)) {
           const cleanHistory = history.filter(m => m.content && m.content.trim() !== "" && m.content !== "...");
-          const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-            body: JSON.stringify({
-              model: modelMap[selectedModel],
-              temperature: 0.7,
-              max_tokens: 4096,
-              messages: [{ role: "system", content: systemPrompt }, ...cleanHistory]
-            })
+          reply = await callGroq({
+            model: modelMap[selectedModel],
+            temperature: 0.7,
+            max_tokens: 4096,
+            messages: [{ role: "system", content: systemPrompt }, ...cleanHistory],
           });
-          const data = await res.json();
-          if (data?.error) throw new Error(data.error.message);
-          reply = data?.choices?.[0]?.message?.content || "Kuch galat ho gaya.";
         } else {
           // OpenRouter models (GPT-4o-mini, DeepSeek)
           const fetchOpenRouter = async () => {
@@ -415,18 +440,12 @@ function ChatApp() {
           }
         }
       } else {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-          body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
-            temperature: 0.7,
-            max_tokens: 4096,
-            messages: [{ role: "system", content: systemPrompt }, ...history]
-          })
+        reply = await callGroq({
+          model: "llama-3.3-70b-versatile",
+          temperature: 0.7,
+          max_tokens: 4096,
+          messages: [{ role: "system", content: systemPrompt }, ...history],
         });
-        const data = await res.json();
-        reply = data?.choices?.[0]?.message?.content || "Kuch galat ho gaya.";
       }
 
       setChats(prev => {
@@ -503,13 +522,10 @@ function ChatApp() {
     ));
     setSuggestions([]);
     try {
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-        body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{ role: "user", content: lastUserMsg }] })
+      const reply = await callGroq({
+        model: "llama-3.3-70b-versatile",
+        messages: [{ role: "user", content: lastUserMsg }],
       });
-      const data = await res.json();
-      const reply = data?.choices?.[0]?.message?.content || "Kuch galat ho gaya.";
       setChats(prev => {
         const updated = prev.map(c => c.id === chatId
           ? { ...c, messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { role: "ai", text: reply } : m) }
