@@ -15,19 +15,24 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    // Handle the result of a redirect sign-in (runs once on page load after redirect back)
+    console.log("Checking redirect result...");
     getRedirectResult(auth)
       .then((result) => {
+        console.log("Redirect result:", result);
         if (result?.user) {
+          console.log("User from redirect:", result.user.email);
           setUser(result.user);
+        } else {
+          console.log("No redirect result — result was null");
         }
       })
       .catch((err) => {
-        console.error("Redirect login failed:", err);
+        console.error("Redirect login failed:", err.code, err.message);
         setAuthError(err.message);
       });
 
     const unsub = onAuthStateChanged(auth, (u) => {
+      console.log("onAuthStateChanged fired, user:", u?.email || "null");
       setUser(u);
       setLoading(false);
     });
