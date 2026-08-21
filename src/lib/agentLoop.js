@@ -26,33 +26,67 @@ Rules:
 - Once the site is fully written and there is nothing left to change, reply with a short
   plain text summary and do NOT call any more tools. That reply ends the build step.`;
 
-async function callModel(messages) {
-  const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${GROQ_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages,
-      tools,
-      tool_choice: "auto",
-    }),
-  });
-  if (!res.ok) {
+const MAX_RATE_LIMIT_RETRIES = 5;
+// Longest a single file's content is allowed to be inside the conversation
+// sent to the model. Keeps token usage (and TPM rate-limit hits) down.
+const MAX_TOOL_RESULT_CHARS = 4000;
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Groq's 429 body includes a hint like "Please try again in 9.4725s."
+// Pull that out so we can wait the right amount instead of guessing.
+function parseRetryAfterSeconds(errorText) {
+  const match = errorText.match(/try again in ([\d.]+)s/i);
+  if (match) return parseFloat(match[1]);
+  return null;
+}
+
+async function callModel(messages, onEvent) {
+  for (let attempt = 0; attempt <= MAX_RATE_LIMIT_RETRIES; attempt++) {
+    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        messages,
+        tools,
+        tool_choice: "auto",
+      }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      return data.choices[0].message;
+    }
+
     const text = await res.text();
+
+    if (res.status === 429 && attempt < MAX_RATE_LIMIT_RETRIES) {
+      const waitSeconds = parseRetryAfterSeconds(text) ?? 2 * (attempt + 1);
+      // small buffer so we land just after the limit resets
+      const waitMs = Math.ceil(waitSeconds * 1000) + 300;
+      onEvent?.({
+        type: "thought",
+        text: `Rate limited, waiting ${Math.ceil(waitSeconds)}s before retrying...`,
+      });
+      await sleep(waitMs);
+      continue;
+    }
+
     throw new Error(`Model call failed: ${res.status} ${text}`);
   }
-  const data = await res.json();
-  return data.choices[0].message;
 }
 
 // One full "reason -> act -> observe" cycle, repeated until the model
 // stops calling tools (or we hit the step limit).
 async function agentWriteLoop(messages, onEvent) {
   for (let step = 0; step < MAX_STEPS; step++) {
-    const msg = await callModel(messages);
+    const msg = await callModel(messages, onEvent);
     messages.push(msg);
 
     if (!msg.tool_calls || msg.tool_calls.length === 0) {
@@ -89,10 +123,17 @@ async function agentWriteLoop(messages, onEvent) {
 
       onEvent({ type: "tool_result", name, args, result });
 
+      let content = typeof result === "string" ? result : JSON.stringify(result);
+      if (content.length > MAX_TOOL_RESULT_CHARS) {
+        content =
+          content.slice(0, MAX_TOOL_RESULT_CHARS) +
+          `\n...[truncated, ${content.length - MAX_TOOL_RESULT_CHARS} more chars omitted]`;
+      }
+
       messages.push({
         role: "tool",
         tool_call_id: call.id,
-        content: typeof result === "string" ? result : JSON.stringify(result),
+        content,
       });
     }
   }
