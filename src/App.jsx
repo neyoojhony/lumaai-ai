@@ -305,7 +305,7 @@ function ChatApp() {
   async function fetchSuggestions(userText, aiReply) {
     try {
       const content = await callGroq({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: `Based on this conversation:\nUser: "${userText}"\nAI: "${aiReply}"\n\nGenerate exactly 3 short follow-up questions the user might want to ask next.\nReturn ONLY a JSON array of 3 strings, nothing else.` }]
       });
       const clean = content.replace(/```json|```/g, "").trim();
@@ -316,7 +316,7 @@ function ChatApp() {
   async function generateChatTitle(chatId, userText, aiReply) {
     try {
       const content = await callGroq({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: `Generate a very short title (3-6 words max) for this conversation:\nUser: "${userText}"\nAI: "${aiReply.slice(0, 200)}"\n\nReturn ONLY the title, nothing else. No quotes, no punctuation at end.` }]
       });
       const title = content.trim() || userText.slice(0, 40);
@@ -441,7 +441,7 @@ function ChatApp() {
         }
       } else {
         reply = await callGroq({
-          model: "llama-3.3-70b-versatile",
+          model: "openai/gpt-oss-120b",
           temperature: 0.7,
           max_tokens: 4096,
           messages: [{ role: "system", content: systemPrompt }, ...history],
@@ -523,7 +523,7 @@ function ChatApp() {
     setSuggestions([]);
     try {
       const reply = await callGroq({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-120b",
         messages: [{ role: "user", content: lastUserMsg }],
       });
       setChats(prev => {
