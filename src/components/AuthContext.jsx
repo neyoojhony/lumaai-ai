@@ -1,11 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, googleProvider } from "../firebase";
+
 import {
-  signInWithPopup,
   signInWithRedirect,
-  getRedirectResult,
   signOut,
   onAuthStateChanged,
+  getRedirectResult,
 } from "firebase/auth";
 
 const AuthContext = createContext(null);
@@ -16,11 +16,19 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    // Handle any pending redirect result (fallback case)
-    getRedirectResult(auth).catch((err) => {
-      console.error("Redirect login failed:", err.code, err.message);
-      setAuthError(err.message);
-    });
+    const checkRedirectLogin = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+
+        if (result?.user) {
+          console.log("Google login successful:", result.user);
+        }
+      } catch (error) {
+        console.error("Google login failed:", error);
+      }
+    };
+
+    checkRedirectLogin();
 
     const unsub = onAuthStateChanged(auth, (u) => {
       setUser(u);
@@ -30,28 +38,10 @@ export function AuthProvider({ children }) {
   }, []);
 
   const loginWithGoogle = async () => {
-    setAuthError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err) {
-      // If popup is blocked or fails for environment reasons, fall back to redirect
-      const fallbackCodes = [
-        "auth/popup-blocked",
-        "auth/popup-closed-by-user",
-        "auth/cancelled-popup-request",
-        "auth/operation-not-supported-in-this-environment",
-      ];
-      if (fallbackCodes.includes(err.code)) {
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr) {
-          console.error("Redirect fallback failed:", redirectErr);
-          setAuthError(redirectErr.message);
-        }
-      } else {
-        console.error("Login failed:", err.code, err.message);
-        setAuthError(err.message);
-      }
+      await signInWithRedirect(auth, googleProvider);
+    } catch (error) {
+      console.error("Google login failed:", error);
     }
   };
 
@@ -59,7 +49,12 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, loginWithGoogle, logout, authError }}
+      value={{
+        user,
+        loading,
+        loginWithGoogle,
+        logout,
+      }}
     >
       {!loading && children}
     </AuthContext.Provider>
