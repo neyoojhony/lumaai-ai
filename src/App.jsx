@@ -19,6 +19,7 @@ import AgentBuilder from "./components/AgentBuilder";
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
+const HF_API_KEY = import.meta.env.VITE_HF_API_KEY;
 
 const GROQ_MAX_RETRIES = 5;
 
@@ -57,6 +58,65 @@ async function callGroq(payload) {
     }
 
     throw new Error(`Groq call failed: ${res.status} ${text}`);
+  }
+}
+
+// ----------------------------------------------------------------
+// Image generation — auto-detected from the user's message, no
+// model picker in the UI. Pollinations first (free, no key), falls
+// back to Hugging Face's Serverless Inference API if it fails.
+// ----------------------------------------------------------------
+const IMAGE_NOUN_RE = /\b(image|images|photo|photos|picture|pictures|pic|pics|drawing|artwork|art|wallpaper|poster|illustration|logo|icon|avatar|tasveer|tasvir|chitra)\b/i;
+const IMAGE_VERB_RE = /\b(generate|create|draw|make|design|render|paint|sketch|banao|bana\s*do|bana\s*de|banade|bnao|dikhao|show\s*me)\b/i;
+
+function isImageRequest(text) {
+  if (!text) return false;
+  return IMAGE_NOUN_RE.test(text) && (IMAGE_VERB_RE.test(text) || /\b(chahiye|krdo|kr\s*do|please|pls)\b/i.test(text));
+}
+
+// Strips the trigger words so Pollinations/HF get a cleaner prompt.
+function buildImagePrompt(text) {
+  const cleaned = text
+    .replace(IMAGE_VERB_RE, "")
+    .replace(/\b(an?|the|of|for|me|please|pls|krdo|kr\s*do|chahiye)\b/gi, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  return cleaned || text;
+}
+
+async function generateImagePollinations(prompt) {
+  const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=1024&height=1024&nologo=true`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Pollinations failed: ${res.status}`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+async function generateImageHuggingFace(prompt) {
+  if (!HF_API_KEY) throw new Error("Hugging Face key missing");
+  const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${HF_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ inputs: prompt }),
+  });
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Hugging Face failed: ${res.status} ${errText}`);
+  }
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+// Tries Pollinations first, falls back to Hugging Face automatically.
+async function generateImage(prompt) {
+  try {
+    return await generateImagePollinations(prompt);
+  } catch (e) {
+    console.warn("Pollinations failed, falling back to Hugging Face:", e);
+    return await generateImageHuggingFace(prompt);
   }
 }
 
@@ -342,6 +402,25 @@ function ChatApp() {
   async function sendMessage(text, chatId) {
     setSuggestions([]);
     setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: [...c.messages, { role: "user", text }, { role: "ai", text: "...", loading: true }] } : c));
+
+    // Image requests skip the text LLM entirely and hit a real image API.
+    if (isImageRequest(text)) {
+      try {
+        const prompt = buildImagePrompt(text);
+        const imageUrl = await generateImage(prompt);
+        setChats(prev => {
+          const updated = prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { role: "ai", text: "Here's your image:", image: imageUrl } : m) } : c);
+          const chat = updated.find(c => c.id === chatId);
+          if (chat && chat.messages.length > 0) saveChat(chat);
+          return updated;
+        });
+      } catch (e) {
+        console.error("Image generation error:", e);
+        setChats(prev => prev.map(c => c.id === chatId ? { ...c, messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { role: "ai", text: "Image generate nahi ho payi, thoda wait karke dobara try karo." } : m) } : c));
+      }
+      return;
+    }
+
     try {
       const currentChat = chats.find(c => c.id === chatId);
       const history = (currentChat?.messages || [])
@@ -521,6 +600,29 @@ function ChatApp() {
       : c
     ));
     setSuggestions([]);
+
+    if (isImageRequest(lastUserMsg)) {
+      try {
+        const prompt = buildImagePrompt(lastUserMsg);
+        const imageUrl = await generateImage(prompt);
+        setChats(prev => {
+          const updated = prev.map(c => c.id === chatId
+            ? { ...c, messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { role: "ai", text: "Here's your image:", image: imageUrl } : m) }
+            : c
+          );
+          const chat = updated.find(c => c.id === chatId);
+          if (chat) saveChat(chat);
+          return updated;
+        });
+      } catch {
+        setChats(prev => prev.map(c => c.id === chatId
+          ? { ...c, messages: c.messages.map((m, i) => i === c.messages.length - 1 ? { role: "ai", text: "Image generate nahi ho payi, dobara try karo." } : m) }
+          : c
+        ));
+      }
+      return;
+    }
+
     try {
       const reply = await callGroq({
         model: "openai/gpt-oss-120b",
