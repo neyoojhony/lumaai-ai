@@ -119,46 +119,6 @@ async function generateImage(prompt) {
     return await generateImageHuggingFace(prompt);
   }
 }
-   
-
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function parseRetryAfterSeconds(errorText) {
-  const match = errorText.match(/try again in ([\d.]+)s/i);
-  return match ? parseFloat(match[1]) : null;
-}
-
-// Shared helper for every direct Groq call — retries on 429 rate limits
-// and throws a real error instead of silently returning empty text.
-async function callGroq(payload) {
-  for (let attempt = 0; attempt <= GROQ_MAX_RETRIES; attempt++) {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${GROQ_API_KEY}` },
-      body: JSON.stringify(payload),
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const content = data?.choices?.[0]?.message?.content;
-      if (!content) throw new Error("Groq returned an empty response");
-      return content;
-    }
-
-    const text = await res.text();
-
-    if (res.status === 429 && attempt < GROQ_MAX_RETRIES) {
-      const waitSeconds = parseRetryAfterSeconds(text) ?? 2 * (attempt + 1);
-      await sleep(Math.ceil(waitSeconds * 1000) + 300);
-      continue;
-    }
-
-    throw new Error(`Groq call failed: ${res.status} ${text}`);
-  }
-}
 
 function LandingPage() {
   const { user } = useAuth();
