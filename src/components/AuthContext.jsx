@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { auth, googleProvider } from "../firebase";
 import {
+  signInWithPopup,
   signInWithRedirect,
   getRedirectResult,
   signOut,
@@ -15,31 +16,45 @@ export function AuthProvider({ children }) {
   const [authError, setAuthError] = useState(null);
 
   useEffect(() => {
-    console.log("Checking redirect result...");
-    getRedirectResult(auth)
-      .then((result) => {
-        console.log("Redirect result:", result);
-        if (result?.user) {
-          console.log("User from redirect:", result.user.email);
-          setUser(result.user);
-        } else {
-          console.log("No redirect result — result was null");
-        }
-      })
-      .catch((err) => {
-        console.error("Redirect login failed:", err.code, err.message);
-        setAuthError(err.message);
-      });
+    // Handle any pending redirect result (fallback case)
+    getRedirectResult(auth).catch((err) => {
+      console.error("Redirect login failed:", err.code, err.message);
+      setAuthError(err.message);
+    });
 
     const unsub = onAuthStateChanged(auth, (u) => {
-      console.log("onAuthStateChanged fired, user:", u?.email || "null");
       setUser(u);
       setLoading(false);
     });
     return unsub;
   }, []);
 
-  const loginWithGoogle = () => signInWithRedirect(auth, googleProvider);
+  const loginWithGoogle = async () => {
+    setAuthError(null);
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      // If popup is blocked or fails for environment reasons, fall back to redirect
+      const fallbackCodes = [
+        "auth/popup-blocked",
+        "auth/popup-closed-by-user",
+        "auth/cancelled-popup-request",
+        "auth/operation-not-supported-in-this-environment",
+      ];
+      if (fallbackCodes.includes(err.code)) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          console.error("Redirect fallback failed:", redirectErr);
+          setAuthError(redirectErr.message);
+        }
+      } else {
+        console.error("Login failed:", err.code, err.message);
+        setAuthError(err.message);
+      }
+    }
+  };
+
   const logout = () => signOut(auth);
 
   return (
