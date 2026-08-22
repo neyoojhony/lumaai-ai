@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
+import JSZip from "jszip";
 import { buildWebsite } from "../lib/agentLoop";
+import { readAllProjectFiles } from "../lib/webcontainerService";
 
 const toolLabel = (name, args) => {
   if (name === "list_files") return "Reading project files";
@@ -13,6 +15,7 @@ export default function AgentBuilder() {
   const [running, setRunning] = useState(false);
   const [log, setLog] = useState([]);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [downloading, setDownloading] = useState(false);
   const logEndRef = useRef(null);
 
   const pushLog = (entry) => {
@@ -46,6 +49,30 @@ export default function AgentBuilder() {
     }
   };
 
+  // Reads every file out of the WebContainer sandbox and zips it up so
+  // the person can download the generated project and open it in their
+  // own editor (VS Code, etc.) or send it to someone.
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const files = await readAllProjectFiles();
+      const zip = new JSZip();
+      files.forEach((f) => zip.file(f.path, f.content));
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "agent-site.zip";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      pushLog({ kind: "error", text: `Download failed: ${e.message}` });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const icon = (kind) => {
     if (kind === "active") return "⟳";
     if (kind === "done") return "✓";
@@ -71,7 +98,7 @@ export default function AgentBuilder() {
         html, body, #root { height: 100%; margin: 0; overflow: hidden; }
         .agent-wrap { max-width: 1100px; width: 100%; margin: 0 auto; padding: 24px;
           box-sizing: border-box; display: flex; flex-direction: column; height: 100%; min-height: 0; }
-        .agent-header { flex: 0 0 auto; }
+        .agent-header { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; }
         .agent-input-row { display: flex; gap: 10px; margin-bottom: 20px; background: #14181d;
           border: 1px solid #22272e; border-radius: 10px; padding: 10px; flex: 0 0 auto; }
         .agent-grid { display: grid; grid-template-columns: 340px 1fr; gap: 1px; background: #22272e;
@@ -88,9 +115,32 @@ export default function AgentBuilder() {
         }
       `}</style>
       <div className="agent-wrap">
-        <h1 className="agent-header" style={{ fontSize: 18, fontWeight: 600, marginBottom: 16 }}>
-          LumaAI Agent
-        </h1>
+        <div className="agent-header" style={{ marginBottom: 16 }}>
+          <h1 style={{ fontSize: 18, fontWeight: 600, margin: 0 }}>
+            LumaAI Agent
+          </h1>
+          {previewUrl && (
+            <button
+              onClick={handleDownload}
+              disabled={downloading}
+              style={{
+                background: "transparent",
+                color: "#e7e9ec",
+                border: "1px solid #22272e",
+                borderRadius: 7,
+                padding: "6px 14px",
+                fontSize: 12.5,
+                fontWeight: 600,
+                cursor: downloading ? "default" : "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+              }}
+            >
+              {downloading ? "Zipping..." : "⬇ Download ZIP"}
+            </button>
+          )}
+        </div>
 
         <div className="agent-input-row">
           <input
