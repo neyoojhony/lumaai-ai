@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { useBackClose } from "../useBackClose";
+import HelpPanel from "./HelpPanel";
 
 function getGroup(timestamp) {
   const now = new Date();
@@ -28,6 +29,7 @@ export default function Sidebar({
   const [renameValue, setRenameValue] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showHelp, setShowHelp] = useState(false);
   useBackClose(showUserMenu, () => setShowUserMenu(false));
 
   const isDark = theme !== "light";
@@ -166,12 +168,25 @@ export default function Sidebar({
             user={user}
             onClose={() => setShowUserMenu(false)}
             onSettings={() => { setShowUserMenu(false); onCustomize?.(); }}
+            onGetHelp={() => { setShowUserMenu(false); setShowHelp(true); }}
             onLogout={() => { setShowUserMenu(false); onLogout?.(); }}
             isDark={isDark}
             borderColor={borderColor}
             textColor={textColor}
             mutedText={mutedText}
             hoverBg={hoverBg}
+            sidebarBg={sidebarBg}
+          />
+        )}
+        {showHelp && (
+          <HelpPanel
+            onClose={() => setShowHelp(false)}
+            isDark={isDark}
+            textColor={textColor}
+            mutedText={mutedText}
+            borderColor={borderColor}
+            hoverBg={hoverBg}
+            accentMain={accentMain}
             sidebarBg={sidebarBg}
           />
         )}
@@ -207,7 +222,7 @@ export default function Sidebar({
 
 // Claude-style profile dropdown: email header, menu items, divider, log out.
 // Opens upward since the trigger sits at the bottom of the sidebar.
-function UserMenu({ user, onClose, onSettings, onLogout, isDark, borderColor, textColor, mutedText, hoverBg, sidebarBg }) {
+function UserMenu({ user, onClose, onSettings, onGetHelp, onLogout, isDark, borderColor, textColor, mutedText, hoverBg, sidebarBg }) {
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -221,7 +236,7 @@ function UserMenu({ user, onClose, onSettings, onLogout, isDark, borderColor, te
   const items = [
     { icon: <MenuSettingsIcon />, label: "Settings", onClick: onSettings },
     { icon: <LanguageIcon />, label: "Language", onClick: () => {} },
-    { icon: <HelpIcon />, label: "Get help", onClick: () => window.open("mailto:support@lumaai.app", "_blank") },
+    { icon: <HelpIcon />, label: "Get help", onClick: onGetHelp },
   ];
 
   return (
