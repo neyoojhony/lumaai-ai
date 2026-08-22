@@ -173,3 +173,33 @@ export async function startDevServer(onOutput) {
     });
   });
 }
+
+// Walks the whole project (skipping node_modules/.git/dist/.vite) and
+// reads every file's text content — used to build a downloadable zip.
+export async function readAllProjectFiles() {
+  const container = await getContainer();
+  const skip = new Set(["node_modules", ".git", "dist", ".vite"]);
+
+  async function walk(path) {
+    const entries = await container.fs.readdir(path, { withFileTypes: true });
+    let files = [];
+    for (const entry of entries) {
+      if (skip.has(entry.name)) continue;
+      const full = path === "." ? entry.name : `${path}/${entry.name}`;
+      if (entry.isDirectory()) {
+        files = files.concat(await walk(full));
+      } else {
+        try {
+          const content = await container.fs.readFile(full, "utf-8");
+          files.push({ path: full, content });
+        } catch (e) {
+          // Skip files that can't be read as text (shouldn't happen — the
+          // agent only ever writes text/code files).
+        }
+      }
+    }
+    return files;
+  }
+
+  return walk(".");
+}
