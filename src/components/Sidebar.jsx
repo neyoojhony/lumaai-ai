@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react";
-import { useBackClose } from "../useBackClose";
 
 function getGroup(timestamp) {
   const now = new Date();
@@ -27,8 +26,6 @@ export default function Sidebar({
   const [renamingChatId, setRenamingChatId] = useState(null);
   const [renameValue, setRenameValue] = useState("");
   const [hoveredChatId, setHoveredChatId] = useState(null);
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  useBackClose(showUserMenu, () => setShowUserMenu(false));
 
   const isDark = theme !== "light";
   const borderColor = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)";
@@ -159,102 +156,30 @@ export default function Sidebar({
         )}
       </div>
 
-      {/* User — click to open profile menu (Claude-style dropdown) */}
-      <div style={{ position: "relative" }}>
-        {showUserMenu && (
-          <UserMenu
-            user={user}
-            onClose={() => setShowUserMenu(false)}
-            onSettings={() => { setShowUserMenu(false); onCustomize?.(); }}
-            onLogout={() => { setShowUserMenu(false); onLogout?.(); }}
-            isDark={isDark}
-            borderColor={borderColor}
-            textColor={textColor}
-            mutedText={mutedText}
-            hoverBg={hoverBg}
-            sidebarBg={sidebarBg}
-          />
-        )}
-        <button
-          onClick={() => setShowUserMenu(v => !v)}
-          className="luma-safe-bottom"
-          style={{
-            width: "100%", borderTop: `0.5px solid ${borderColor}`, padding: "12px 16px",
-            display: "flex", alignItems: "center", gap: 10, background: showUserMenu ? hoverBg : "transparent",
-            border: "none", borderTopWidth: "0.5px", borderTopStyle: "solid", borderTopColor: borderColor,
-            cursor: "pointer", textAlign: "left"
-          }}>
-          {user?.photoURL ? (
-            <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
-          ) : (
-            <div style={{ position: "relative", width: 28, height: 28, borderRadius: "50%", background: accentMain, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff", flexShrink: 0 }}>
-              {user?.displayName?.[0] || "A"}
-              <span style={{ position: "absolute", bottom: 0, right: 0, width: 8, height: 8, background: "#22c55e", borderRadius: "50%", border: `1.5px solid ${sidebarBg || "#161612"}` }} />
-            </div>
-          )}
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ fontSize: 13, color: textColor, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.displayName || "User"}</p>
-            <p style={{ fontSize: 11, color: mutedText, marginTop: 2 }}>Free plan</p>
+      {/* User */}
+      <div className="luma-safe-bottom" style={{ borderTop: `0.5px solid ${borderColor}`, padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+        {user?.photoURL ? (
+          <img src={user.photoURL} alt="avatar" style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, objectFit: "cover" }} />
+        ) : (
+          <div style={{ position: "relative", width: 28, height: 28, borderRadius: "50%", background: accentMain, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, color: "#fff", flexShrink: 0 }}>
+            {user?.displayName?.[0] || "A"}
+            <span style={{ position: "absolute", bottom: 0, right: 0, width: 8, height: 8, background: "#22c55e", borderRadius: "50%", border: `1.5px solid ${sidebarBg || "#161612"}` }} />
           </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={mutedText} strokeWidth="1.8" style={{ flexShrink: 0, transform: showUserMenu ? "rotate(180deg)" : "none", transition: "transform 0.15s" }}>
-            <polyline points="6 9 12 15 18 9"/>
-          </svg>
-        </button>
+        )}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <p style={{ fontSize: 13, color: textColor, lineHeight: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user?.displayName || "User"}</p>
+          <p style={{ fontSize: 11, color: mutedText, marginTop: 2 }}>Free plan</p>
+        </div>
+        {onLogout && (
+          <button onClick={onLogout} title="Sign out"
+            style={{ background: "none", border: "none", cursor: "pointer", color: mutedText, padding: 4, borderRadius: 4, flexShrink: 0 }}
+            onMouseEnter={e => e.currentTarget.style.color = "#f87171"}
+            onMouseLeave={e => e.currentTarget.style.color = mutedText}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          </button>
+        )}
       </div>
     </aside>
-  );
-}
-
-// Claude-style profile dropdown: email header, menu items, divider, log out.
-// Opens upward since the trigger sits at the bottom of the sidebar.
-function UserMenu({ user, onClose, onSettings, onLogout, isDark, borderColor, textColor, mutedText, hoverBg, sidebarBg }) {
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const handleClick = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) onClose();
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [onClose]);
-
-  const items = [
-    { icon: <MenuSettingsIcon />, label: "Settings", onClick: onSettings },
-    { icon: <LanguageIcon />, label: "Language", onClick: () => {} },
-    { icon: <HelpIcon />, label: "Get help", onClick: () => window.open("mailto:support@lumaai.app", "_blank") },
-  ];
-
-  return (
-    <div ref={menuRef} style={{
-      position: "absolute", bottom: "100%", left: 8, right: 8, marginBottom: 6,
-      background: isDark ? "#1e1e1a" : "#f0f0eb", border: `0.5px solid ${borderColor}`,
-      borderRadius: 10, boxShadow: "0 12px 32px rgba(0,0,0,0.4)", overflow: "hidden", zIndex: 60,
-    }}>
-      <div style={{ padding: "12px 14px 10px", fontSize: 12.5, color: mutedText, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {user?.email || user?.displayName || "Account"}
-      </div>
-      <div style={{ padding: "0 6px 6px" }}>
-        {items.map((item, i) => (
-          <button key={i} onClick={item.onClick}
-            style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6, background: "transparent", border: "none", cursor: "pointer", color: textColor, fontSize: 13.5 }}
-            onMouseEnter={e => e.currentTarget.style.background = hoverBg}
-            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-            <span style={{ opacity: 0.75, flexShrink: 0, display: "flex" }}>{item.icon}</span>
-            <span style={{ flex: 1, textAlign: "left" }}>{item.label}</span>
-          </button>
-        ))}
-      </div>
-      <div style={{ height: "0.5px", background: borderColor, margin: "0 14px" }} />
-      <div style={{ padding: "6px" }}>
-        <button onClick={onLogout}
-          style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 6, background: "transparent", border: "none", cursor: "pointer", color: textColor, fontSize: 13.5 }}
-          onMouseEnter={e => { e.currentTarget.style.background = hoverBg; e.currentTarget.style.color = "#f87171"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = textColor; }}>
-          <span style={{ opacity: 0.75, flexShrink: 0, display: "flex" }}><LogoutMenuIcon /></span>
-          <span style={{ flex: 1, textAlign: "left" }}>Log out</span>
-        </button>
-      </div>
-    </div>
   );
 }
 
@@ -323,9 +248,3 @@ const SettingsIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill=
 const ChatIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>;
 const FolderIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>;
 const GridIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>;
-
-// Menu icons for the profile dropdown
-const MenuSettingsIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>;
-const LanguageIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>;
-const HelpIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>;
-const LogoutMenuIcon = () => <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>;
