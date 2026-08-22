@@ -64,10 +64,10 @@ async function callGroq(payload) {
 // ----------------------------------------------------------------
 // Image generation — auto-detected from the user's message, no
 // model picker in the UI. Pollinations first (free, no key), falls
-// back to Hugging Face's Serverless Inference API if it fails.
+// back to Hugging Face's Inference Providers router if it fails.
 // ----------------------------------------------------------------
 const IMAGE_NOUN_RE = /\b(image|images|photo|photos|picture|pictures|pic|pics|drawing|artwork|art|wallpaper|poster|illustration|logo|icon|avatar|tasveer|tasvir|chitra)\b/i;
-const IMAGE_VERB_RE = /\b(generate|create|draw|make|design|render|paint|sketch|banao|bana\s*do|bana\s*de|banade|bnao|dikhao|show\s*me)\b/i;
+const IMAGE_VERB_RE = /\b(generate|create|draw|make|design|render|paint|sketch|banao|bana\s*do|bana\s*de|banade|bnao|bna\s*do|bna\s*de|dikhao|show\s*me)\b/i;
 
 function isImageRequest(text) {
   if (!text) return false;
@@ -94,7 +94,7 @@ async function generateImagePollinations(prompt) {
 
 async function generateImageHuggingFace(prompt) {
   if (!HF_API_KEY) throw new Error("Hugging Face key missing");
-  const res = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+  const res = await fetch("https://router.huggingface.co/hf-inference/models/black-forest-labs/FLUX.2-klein-4B", {
     method: "POST",
     headers: {
       "Authorization": `Bearer ${HF_API_KEY}`,
