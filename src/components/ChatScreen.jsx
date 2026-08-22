@@ -43,6 +43,49 @@ function CodeBlock({ children, className, isDark }) {
   );
 }
 
+// Renders a generated image inside a chat bubble — loading shimmer while it
+// decodes, broken-image fallback if the blob URL failed, and a download button.
+function GeneratedImage({ src, isDark, borderColor, mutedText }) {
+  const [loaded, setLoaded] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <div style={{ padding: "12px 14px", fontSize: 13, color: mutedText, border: `0.5px dashed ${borderColor}`, borderRadius: 10 }}>
+        Image load nahi ho payi.
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: "relative", maxWidth: 360, width: "100%" }}>
+      {!loaded && (
+        <div style={{ width: "100%", aspectRatio: "1 / 1", borderRadius: 12, background: isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ display: "flex", gap: 5 }}>
+            <span className="luma-typing-dot" style={{ background: mutedText }} />
+            <span className="luma-typing-dot" style={{ background: mutedText }} />
+            <span className="luma-typing-dot" style={{ background: mutedText }} />
+          </div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt="Generated"
+        onLoad={() => setLoaded(true)}
+        onError={() => setFailed(true)}
+        style={{ display: loaded ? "block" : "none", width: "100%", borderRadius: 12, border: `0.5px solid ${borderColor}` }}
+      />
+      {loaded && (
+        <a href={src} download="lumaai-image.png"
+          style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: 6, background: "rgba(0,0,0,0.55)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", textDecoration: "none" }}
+          title="Download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </a>
+      )}
+    </div>
+  );
+}
+
 function ModelSelector({ selectedModel, onModelChange, borderColor, mutedText, isDark, accentMain }) {
   const [open, setOpen] = useState(false);
   useBackClose(open, () => setOpen(false));
@@ -193,7 +236,7 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
                 </div>
               ) : (
                 <div style={{
-                  padding: "10px 14px", fontSize: 14, lineHeight: 1.6,
+                  padding: msg.image ? 10 : "10px 14px", fontSize: 14, lineHeight: 1.6,
                   borderRadius: borderRadius,
                   background: msg.role === "ai" ? (isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)") : accentBg,
                   border: `0.5px solid ${msg.role === "ai" ? borderColor : accentBorder}`,
@@ -208,6 +251,13 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
                         <span className="luma-typing-dot" style={{ background: mutedText }} />
                         <span className="luma-typing-dot" style={{ background: mutedText }} />
                         <span className="luma-typing-dot" style={{ background: mutedText }} />
+                      </div>
+                    ) : msg.image ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                        <GeneratedImage src={msg.image} isDark={isDark} borderColor={borderColor} mutedText={mutedText} />
+                        {msg.text && (
+                          <p style={{ margin: "0 4px", fontSize: 13, color: mutedText }}>{msg.text}</p>
+                        )}
                       </div>
                     ) : (
                       <ReactMarkdown components={{
@@ -249,9 +299,11 @@ export default function ChatScreen({ chat, onSend, onRegenerate, suggestions = [
                     </>
                   ) : (
                     <>
-                      <MsgBtn title="Copy" isDark={isDark} onClick={() => navigator.clipboard.writeText(msg.text)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
-                      </MsgBtn>
+                      {!msg.image && (
+                        <MsgBtn title="Copy" isDark={isDark} onClick={() => navigator.clipboard.writeText(msg.text)}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+                        </MsgBtn>
+                      )}
                       {i === chat.messages.length - 1 && onRegenerate && (
                         <MsgBtn title="Retry" isDark={isDark} onClick={onRegenerate}>
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
